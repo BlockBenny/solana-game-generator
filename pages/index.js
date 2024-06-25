@@ -1,118 +1,344 @@
-import Image from "next/image";
-import { Inter } from "next/font/google";
+import { useState, useEffect, useRef } from 'react';
+import { useWallet } from '@solana/wallet-adapter-react';
+import dynamic from 'next/dynamic';
+import { checkTokenBalance } from '../utils/tokenBalance';
+import LoadingSpinner from '../components/LoadingSpinner';
+import SpaceInvadersGame from '../components/SpaceInvadersGame';
+import { BarChart2, MessageCircle, Twitter } from 'lucide-react';
 
-const inter = Inter({ subsets: ["latin"] });
+const WalletMultiButton = dynamic(
+  () =>
+    import('@solana/wallet-adapter-react-ui').then(
+      (mod) => mod.WalletMultiButton
+    ),
+  { ssr: false }
+);
 
 export default function Home() {
-  return (
-    <main
-      className={`flex min-h-screen flex-col items-center justify-between p-24 ${inter.className}`}
-    >
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">pages/index.js</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+  const { publicKey } = useWallet();
+  const [hasAccess, setHasAccess] = useState(false);
+  const [tokenBalance, setTokenBalance] = useState(0);
+  const [isCheckingBalance, setIsCheckingBalance] = useState(false);
+  const [balanceError, setBalanceError] = useState(null);
+  const [prompt, setPrompt] = useState('');
+  const [gameVersions, setGameVersions] = useState([]);
+  const [currentVersionIndex, setCurrentVersionIndex] = useState(-1);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [error, setError] = useState('');
+  const iframeRef = useRef(null);
+
+  const [tokenAddress, setTokenAddress] = useState(
+    process.env.NEXT_PUBLIC_TOKEN_ADDRESS
+  );
+
+  useEffect(() => {
+    async function checkAccess() {
+      if (publicKey) {
+        setIsCheckingBalance(true);
+        setBalanceError(null);
+        try {
+          await fetch('/api/users', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ publicKey: publicKey.toBase58() }),
+          });
+
+          const balance = await checkTokenBalance(
+            publicKey.toBase58(),
+            tokenAddress
+          );
+          setTokenBalance(balance);
+          setHasAccess(balance >= 1000000);
+        } catch (error) {
+          console.error('Error checking access:', error);
+          setBalanceError(
+            'Failed to check token balance. Please ensure you have tokens in your wallet and try again.'
+          );
+          setHasAccess(false);
+        } finally {
+          setIsCheckingBalance(false);
+        }
+      }
+    }
+
+    checkAccess();
+  }, [publicKey, tokenAddress]);
+
+  const generateGame = async (isIteration = false) => {
+    setIsGenerating(true);
+    setError('');
+
+    try {
+      const response = await fetch('/api/generate-game', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt,
+          currentGame: isIteration ? gameVersions[currentVersionIndex] : null,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate game');
+      }
+
+      if (data.modificationApplied && data.htmlFile) {
+        const newVersion = {
+          htmlFile: data.htmlFile,
+          prompt: data.originalPrompt,
+        };
+        if (isIteration) {
+          setGameVersions([
+            ...gameVersions.slice(0, currentVersionIndex + 1),
+            newVersion,
+          ]);
+          setCurrentVersionIndex(currentVersionIndex + 1);
+        } else {
+          setGameVersions([newVersion]);
+          setCurrentVersionIndex(0);
+        }
+        setPrompt('');
+      } else {
+        setError(
+          'No changes were applied. The AI might not have understood the prompt. Please try again with a different prompt.'
+        );
+        setPrompt(data.originalPrompt);
+      }
+    } catch (error) {
+      console.error('Error generating game:', error);
+      setError(
+        `Failed to generate or modify game: ${error.message}. Please try again with a different prompt.`
+      );
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const focusGame = () => {
+    if (iframeRef.current) {
+      iframeRef.current.contentWindow.postMessage('focus', '*');
+    }
+  };
+
+  const currentGame = gameVersions[currentVersionIndex] || { htmlFile: '' };
+
+  const renderGame = () => {
+    if (!currentGame.htmlFile) {
+      return (
+        <div className="flex items-center justify-center h-full text-gray-400">
+          No game generated yet
         </div>
-      </div>
+      );
+    }
 
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-full sm:before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full sm:after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700/10 after:dark:from-sky-900 after:dark:via-[#0141ff]/40 before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
+    return (
+      <iframe
+        ref={iframeRef}
+        srcDoc={currentGame.htmlFile}
+        style={{ width: '100%', height: '100%', border: 'none' }}
+        title="Game Preview"
+      />
+    );
+  };
 
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
+  return (
+    <div className="min-h-screen bg-deep-space text-white">
+      <div className="stars"></div>
+      <div className="twinkling"></div>
+      <div className="clouds"></div>
 
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
+      <header className="fixed w-full z-50 bg-opacity-30 backdrop-filter backdrop-blur-lg bg-gray-900 shadow-lg">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+          <h1 className="text-3xl font-bold font-orbitron text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 animate-title">
+            GC
+          </h1>
+          <div className="flex items-center space-x-4">
+            <a
+              href="#"
+              className="text-white hover:text-blue-400 transition duration-300 ease-in-out"
+            >
+              <BarChart2 size={24} />
+            </a>
+            <a
+              href="https://t.me/gamecraftoc"
+              className="text-white hover:text-blue-400 transition duration-300 ease-in-out"
+            >
+              <MessageCircle size={24} />
+            </a>
+            <a
+              href="https://x.com/gc_gamecraft"
+              className="text-white hover:text-blue-400 transition duration-300 ease-in-out"
+            >
+              <Twitter size={24} />
+            </a>
+            <a href="https://t.me/gamecraftoc">
+              <button className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full text-white font-semibold hover:from-blue-600 hover:to-purple-700 transition duration-300 ease-in-out transform hover:scale-105 shadow-lg">
+                Buy $GC
+              </button>
+            </a>
+            {publicKey ? (
+              <WalletMultiButton className="connect-wallet-button" />
+            ) : null}
+          </div>
+        </div>
+      </header>
 
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Discover and deploy boilerplate example Next.js&nbsp;projects.
-          </p>
-        </a>
+      <main className="pt-24 pb-12 px-4 sm:px-6 lg:px-8 relative z-10">
+        {!publicKey ? (
+          <div className="max-w-4xl mt-10 mx-auto text-center">
+            <h1 className="text-5xl font-bold mb-4 font-orbitron text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 animate-title">
+              GameCraft
+            </h1>
+            <h3 className="text-3xl font-bold mb-4 font-orbitron text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 animate-title">
+              Craft your own games with only one prompt
+            </h3>
+            <p className="mb-16">powered by Claude Sonnet 3.5</p>
+            <SpaceInvadersGame />
+            <h3 className="text-xl mt-32 mb-8 font-bold font-orbitron text-transparent bg-clip-text bg-white">
+              To test our latest Beta Version you need to hold at least
+              1,000,000 <b>$GC</b> tokens
+            </h3>
+            <WalletMultiButton className="connect-wallet-button" />
+          </div>
+        ) : isCheckingBalance ? (
+          <div className="max-w-2xl mx-auto bg-blue-800 bg-opacity-50 p-8 rounded-lg text-center animate-pulse shadow-neon">
+            <h2 className="text-2xl font-bold mb-4 font-orbitron">
+              Checking Token Balance...
+            </h2>
+            <LoadingSpinner />
+          </div>
+        ) : balanceError ? (
+          <div className="max-w-2xl mx-auto bg-red-800 bg-opacity-50 p-8 rounded-lg text-center shadow-neon">
+            <h2 className="text-2xl font-bold mb-4 font-orbitron">
+              Error Checking Balance
+            </h2>
+            <p className="text-xl mb-4">{balanceError}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-md font-semibold transition duration-200"
+            >
+              Retry
+            </button>
+          </div>
+        ) : !hasAccess ? (
+          <div className="max-w-2xl mt-10 mx-auto bg-red-800 bg-opacity-50 p-8 rounded-lg text-center shadow-neon">
+            <h2 className="text-2xl font-bold mb-4 font-orbitron">
+              Access Denied
+            </h2>
+            <p className="text-xl mb-4">
+              You need at least 1,000,000 tokens to access the game generator.
+              Your current balance: {tokenBalance}
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-md font-semibold transition duration-200"
+            >
+              Refresh Balance
+            </button>
+          </div>
+        ) : (
+          <div className="max-w-7xl mx-auto space-y-8 animate-fadeIn mt-16">
+            <section className="bg-glass p-6 rounded-lg shadow-neon">
+              <h2 className="text-2xl font-semibold mb-4 font-orbitron">
+                Create or Modify Your Game
+              </h2>
+              <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+                <input
+                  type="text"
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  className="flex-grow p-3 bg-purple-800 border border-purple-600 rounded-md text-white focus:ring-2 focus:ring-blue-500 transition duration-200"
+                  placeholder="e.g. A simple platformer game with a jumping character"
+                />
+                <button
+                  onClick={() => generateGame(false)}
+                  className="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-md font-semibold disabled:opacity-50 transition duration-200"
+                  disabled={isGenerating || !prompt.trim()}
+                >
+                  {isGenerating ? 'Generating...' : 'Generate New Game'}
+                </button>
+                <button
+                  onClick={() => generateGame(true)}
+                  className="px-6 py-2 bg-green-600 hover:bg-green-700 rounded-md font-semibold disabled:opacity-50 transition duration-200"
+                  disabled={
+                    isGenerating || !prompt.trim() || currentVersionIndex === -1
+                  }
+                >
+                  Modify Current Game
+                </button>
+              </div>
+            </section>
 
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50 text-balance`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+            {error && (
+              <div className="bg-red-600 bg-opacity-80 p-4 rounded-md animate-shake">
+                <p>{error}</p>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <section className="lg:col-span-2 bg-glass p-6 rounded-lg shadow-neon">
+                <h2 className="text-2xl font-semibold mb-4 font-orbitron">
+                  Game Preview
+                </h2>
+                <div
+                  className="border border-purple-700 rounded-md overflow-hidden cursor-pointer aspect-w-3 aspect-h-2 bg-black"
+                  onClick={focusGame}
+                >
+                  {isGenerating ? <LoadingSpinner /> : renderGame()}
+                </div>
+                {currentGame.htmlFile && (
+                  <p className="mt-2 text-sm text-gray-400">
+                    Click on the game area to enable controls
+                  </p>
+                )}
+              </section>
+
+              <section className="bg-glass p-6 rounded-lg shadow-neon">
+                <h2 className="text-2xl font-semibold mb-4 font-orbitron">
+                  Version History
+                </h2>
+                {gameVersions.length > 0 ? (
+                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                    {gameVersions.map((version, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setCurrentVersionIndex(index)}
+                        className={`w-full text-left p-2 rounded-md transition duration-200 ${
+                          index === currentVersionIndex
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-purple-800 text-gray-300 hover:bg-purple-700'
+                        }`}
+                      >
+                        <span className="font-semibold">
+                          Version {index + 1}
+                        </span>
+                        <p className="text-sm truncate">{version.prompt}</p>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-400">
+                    No versions yet. Generate your first game!
+                  </p>
+                )}
+              </section>
+            </div>
+
+            <section className="bg-glass p-6 rounded-lg shadow-neon">
+              <h2 className="text-2xl font-semibold mb-4 font-orbitron">
+                Game Code
+              </h2>
+              <textarea
+                value={currentGame.htmlFile}
+                readOnly
+                className="w-full h-64 p-3 bg-purple-800 border border-purple-600 rounded-md text-white font-mono text-sm resize-none"
+              />
+            </section>
+          </div>
+        )}
+      </main>
+    </div>
   );
 }
