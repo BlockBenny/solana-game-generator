@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic';
 import { checkTokenBalance } from '../utils/tokenBalance';
 import LoadingSpinner from '../components/LoadingSpinner';
 import SpaceInvadersGame from '../components/SpaceInvadersGame';
-import { BarChart2, MessageCircle, Twitter } from 'lucide-react';
+import { BarChart2, MessageCircle, Twitter, Trophy } from 'lucide-react';
 
 const WalletMultiButton = dynamic(
   () =>
@@ -26,10 +26,15 @@ export default function Home() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState('');
   const iframeRef = useRef(null);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
 
   const [tokenAddress, setTokenAddress] = useState(
     process.env.NEXT_PUBLIC_TOKEN_ADDRESS
   );
+
+  const [leaderboardPeriod, setLeaderboardPeriod] = useState('daily');
+  const [leaderboardData, setLeaderboardData] = useState([]);
+  const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(false);
 
   useEffect(() => {
     async function checkAccess() {
@@ -63,6 +68,28 @@ export default function Home() {
 
     checkAccess();
   }, [publicKey, tokenAddress]);
+
+  useEffect(() => {
+    fetchLeaderboardData();
+  }, [leaderboardPeriod]);
+
+  const fetchLeaderboardData = async () => {
+    setIsLoadingLeaderboard(true);
+    try {
+      const response = await fetch(
+        `/api/leaderboard?period=${leaderboardPeriod}`
+      );
+      if (!response.ok) {
+        throw new Error('Failed to fetch leaderboard data');
+      }
+      const data = await response.json();
+      setLeaderboardData(data);
+    } catch (error) {
+      console.error('Error fetching leaderboard:', error);
+    } finally {
+      setIsLoadingLeaderboard(false);
+    }
+  };
 
   const generateGame = async (isIteration = false) => {
     setIsGenerating(true);
@@ -143,6 +170,91 @@ export default function Home() {
     );
   };
 
+  const toggleLeaderboard = () => {
+    setShowLeaderboard(!showLeaderboard);
+  };
+
+  const renderLeaderboard = () => (
+    <section className="mt-8 max-w-4xl mx-auto bg-gradient-to-br from-purple-900 to-indigo-900 rounded-xl shadow-2xl overflow-hidden">
+      <div className="p-6 bg-gradient-to-r from-blue-600 to-purple-600">
+        <h2 className="text-3xl font-bold font-orbitron text-white mb-4">
+          Leaderboard
+        </h2>
+        <div className="flex space-x-2 mb-4">
+          {['daily', 'weekly', 'monthly'].map((period) => (
+            <button
+              key={period}
+              onClick={() => setLeaderboardPeriod(period)}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+                leaderboardPeriod === period
+                  ? 'bg-white text-purple-700 shadow-lg transform scale-105'
+                  : 'bg-purple-800 text-white hover:bg-purple-700'
+              }`}
+            >
+              {period.charAt(0).toUpperCase() + period.slice(1)}
+            </button>
+          ))}
+        </div>
+      </div>
+      {isLoadingLeaderboard ? (
+        <div className="p-6 space-y-4">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="animate-pulse flex items-center space-x-4">
+              <div className="w-8 h-8 bg-purple-700 rounded-full"></div>
+              <div className="flex-1 space-y-2">
+                <div className="h-4 bg-purple-700 rounded w-3/4"></div>
+                <div className="h-4 bg-purple-700 rounded w-1/2"></div>
+              </div>
+              <div className="w-16 h-8 bg-purple-700 rounded"></div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-purple-800 text-white">
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  Rank
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  Username
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider">
+                  Points
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-purple-900 bg-opacity-50 divide-y divide-purple-700">
+              {leaderboardData.map((user, index) => (
+                <tr
+                  key={index}
+                  className="hover:bg-purple-800 transition-colors duration-200"
+                >
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
+                    {index + 1}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                    {user.name || 'Anonymous'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                    @{user.username}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-bold text-purple-300">
+                    {user.total_points.toLocaleString()}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  );
+
   return (
     <div className="min-h-screen bg-deep-space text-white">
       <div className="stars"></div>
@@ -151,9 +263,18 @@ export default function Home() {
 
       <header className="fixed w-full z-50 bg-opacity-30 backdrop-filter backdrop-blur-lg bg-gray-900 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <h1 className="text-3xl font-bold font-orbitron text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 animate-title">
-            GC
-          </h1>
+          <div className="flex items-center space-x-4">
+            <h1 className="text-3xl font-bold font-orbitron text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 animate-title">
+              GC
+            </h1>
+            <button
+              onClick={toggleLeaderboard}
+              className="text-white hover:text-blue-400 transition duration-300 ease-in-out flex items-center"
+            >
+              <Trophy size={24} className="mr-2 ml-10" />
+              Leaderboard
+            </button>
+          </div>
           <div className="flex items-center space-x-4">
             <a
               href="https://www.pump.fun/GUHZxRtarCVNaH3hSzVvRWSjpSAHDPJK38d79aHapump"
@@ -186,21 +307,21 @@ export default function Home() {
       </header>
 
       <main className="pt-24 pb-12 px-4 sm:px-6 lg:px-8 relative z-10">
-        {!publicKey ? (
+        {showLeaderboard ? (
+          renderLeaderboard()
+        ) : !publicKey ? (
           <div className="max-w-4xl mt-10 mx-auto text-center">
             <h1 className="text-5xl font-bold mb-4 font-orbitron text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 animate-title">
               GameCraft
             </h1>
-            <h3 className="text-3xl font-bold mb-4 font-orbitron text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 animate-title">
+            <h3 className="text-3xl font-bold mb-8 font-orbitron text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 animate-title">
               Craft your own games with only one prompt
             </h3>
-            <p className="mb-16">powered by Claude Sonnet 3.5</p>
+            <div className="mb-16">
+              <p className="mb-5">Connect your wallet and test the product</p>
+              <WalletMultiButton className="connect-wallet-button" />
+            </div>
             <SpaceInvadersGame />
-            <h3 className="text-xl mt-32 mb-8 font-bold font-orbitron text-transparent bg-clip-text bg-white">
-              To test our latest Beta Version you need to hold at least
-              1,000,000 <b>$GC</b> tokens
-            </h3>
-            <WalletMultiButton className="connect-wallet-button" />
           </div>
         ) : isCheckingBalance ? (
           <div className="max-w-2xl mx-auto bg-blue-800 bg-opacity-50 p-8 rounded-lg text-center animate-pulse shadow-neon">
@@ -335,6 +456,64 @@ export default function Home() {
                 readOnly
                 className="w-full h-64 p-3 bg-purple-800 border border-purple-600 rounded-md text-white font-mono text-sm resize-none"
               />
+            </section>
+
+            <section className="mt-16 leaderboard-container animate-fadeIn">
+              <div className="leaderboard-header">
+                <h2 className="text-3xl font-bold mb-6 font-orbitron text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500">
+                  Leaderboard
+                </h2>
+                <div className="flex justify-center space-x-4 mb-6">
+                  {['daily', 'weekly', 'monthly'].map((period) => (
+                    <button
+                      key={period}
+                      onClick={() => setLeaderboardPeriod(period)}
+                      className={`px-4 py-2 rounded-full text-sm font-medium transition-colors duration-200 ${
+                        leaderboardPeriod === period
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-purple-800 text-gray-300 hover:bg-purple-700'
+                      }`}
+                    >
+                      {period.charAt(0).toUpperCase() + period.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {isLoadingLeaderboard ? (
+                <div className="p-4">
+                  <div className="shimmer h-10 w-full mb-4"></div>
+                  <div className="shimmer h-8 w-full mb-2"></div>
+                  <div className="shimmer h-8 w-full mb-2"></div>
+                  <div className="shimmer h-8 w-full mb-2"></div>
+                  <div className="shimmer h-8 w-full mb-2"></div>
+                  <div className="shimmer h-8 w-full"></div>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="leaderboard-table">
+                    <thead>
+                      <tr>
+                        <th>Rank</th>
+                        <th>Name</th>
+                        <th>Username</th>
+                        <th className="text-right">Points</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {leaderboardData.map((user, index) => (
+                        <tr key={index}>
+                          <td className="leaderboard-rank">{index + 1}</td>
+                          <td>{user.name}</td>
+                          <td>@{user.username}</td>
+                          <td className="leaderboard-points text-right">
+                            {user.total_points}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </section>
           </div>
         )}
