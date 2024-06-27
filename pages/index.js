@@ -427,7 +427,6 @@ export default function Home() {
           <ul className="list-disc list-inside space-y-1">
             <li>Experienced development team</li>
             <li>Strong and engaged community</li>
-            <li>Partnerships with leading tech companies</li>
             <li>Commitment to continuous innovation</li>
           </ul>
         </div>
@@ -524,7 +523,7 @@ export default function Home() {
             <div className="mb-16">
               <p className="mb-5">
                 If you want to use our products for free you need to hold at
-                least 1 million tokens.
+                least 1 million $GC tokens.
               </p>
               <WalletMultiButton className="connect-wallet-button" />
             </div>
