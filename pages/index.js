@@ -1,10 +1,22 @@
 import { useState, useEffect, useRef } from 'react';
+import React from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import dynamic from 'next/dynamic';
 import { checkTokenBalance } from '../utils/tokenBalance';
 import LoadingSpinner from '../components/LoadingSpinner';
 import SpaceInvadersGame from '../components/SpaceInvadersGame';
-import { BarChart2, MessageCircle, Twitter, Trophy } from 'lucide-react';
+import {
+  ArrowRight,
+  Zap,
+  Coins,
+  RocketLaunch,
+  Users,
+  Paperclip,
+  Trophy,
+  BarChart2,
+  MessageCircle,
+  Twitter,
+} from 'lucide-react';
 
 const WalletMultiButton = dynamic(
   () =>
@@ -12,6 +24,17 @@ const WalletMultiButton = dynamic(
       (mod) => mod.WalletMultiButton
     ),
   { ssr: false }
+);
+
+// Move WhitepaperSection outside of the Home component and modify it
+const WhitepaperSection = ({ title, icon: Icon, children }) => (
+  <section className="mb-8 bg-gradient-to-r from-purple-900 to-indigo-900 rounded-lg p-6 shadow-lg">
+    <h2 className="text-3xl font-bold mb-4 flex items-center">
+      {Icon && <Icon className="mr-2" />}
+      {title}
+    </h2>
+    {children}
+  </section>
 );
 
 export default function Home() {
@@ -27,6 +50,8 @@ export default function Home() {
   const [error, setError] = useState('');
   const iframeRef = useRef(null);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [showWhitepaper, setShowWhitepaper] = useState(false);
+  const [isGameCreationMode, setIsGameCreationMode] = useState(false);
 
   const [tokenAddress, setTokenAddress] = useState(
     process.env.NEXT_PUBLIC_TOKEN_ADDRESS
@@ -72,6 +97,26 @@ export default function Home() {
   useEffect(() => {
     fetchLeaderboardData();
   }, [leaderboardPeriod]);
+
+  useEffect(() => {
+    // Disable scrolling with space and arrow keys when generating games
+    const handleKeyDown = (e) => {
+      if (
+        isGenerating &&
+        ['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(
+          e.code
+        )
+      ) {
+        e.preventDefault();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isGenerating]);
 
   const fetchLeaderboardData = async () => {
     setIsLoadingLeaderboard(true);
@@ -170,10 +215,6 @@ export default function Home() {
     );
   };
 
-  const toggleLeaderboard = () => {
-    setShowLeaderboard(!showLeaderboard);
-  };
-
   const renderLeaderboard = () => (
     <section className="mt-8 max-w-4xl mx-auto bg-gradient-to-br from-purple-900 to-indigo-900 rounded-xl shadow-2xl overflow-hidden">
       <div className="p-6 bg-gradient-to-r from-blue-600 to-purple-600">
@@ -255,6 +296,156 @@ export default function Home() {
     </section>
   );
 
+  const toggleLeaderboard = () => {
+    setShowLeaderboard(!showLeaderboard);
+    setShowWhitepaper(false);
+    setIsGameCreationMode(false);
+  };
+
+  const toggleWhitepaper = () => {
+    setShowWhitepaper(!showWhitepaper);
+    setIsGameCreationMode(false);
+  };
+
+  const startGameCreation = () => {
+    setIsGameCreationMode(true);
+    setShowLeaderboard(false);
+    setShowWhitepaper(false);
+  };
+
+  const renderWhitepaper = () => (
+    <div className="max-w-5xl mx-auto p-4">
+      <h1 className="text-5xl font-bold mb-10 text-center bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500">
+        Revolutionizing Game Creation with AI
+      </h1>
+
+      <WhitepaperSection title="Introduction" icon={Zap}>
+        <p className="mb-4">
+          GameCraft is a groundbreaking platform that democratizes game
+          development through the power of AI. With just a simple prompt, anyone
+          can bring their game ideas to life instantly.
+        </p>
+        <ul className="list-disc list-inside space-y-2">
+          <li>No coding experience required</li>
+          <li>Instant game generation</li>
+          <li>Endless possibilities for creativity</li>
+        </ul>
+      </WhitepaperSection>
+
+      <WhitepaperSection title="Cutting-Edge Technology" icon={ArrowRight}>
+        <p className="mb-4">
+          At the heart of GameCraft lies Claude Sonnet 3.5, a state-of-the-art
+          AI model that understands and translates your ideas into playable
+          games.
+        </p>
+        <div className="bg-indigo-800 p-4 rounded-lg">
+          <h3 className="font-semibold mb-2">Key Features:</h3>
+          <ul className="list-disc list-inside space-y-1">
+            <li>Advanced natural language processing</li>
+            <li>Real-time game code generation</li>
+            <li>Seamless integration with web technologies</li>
+            <li>Continuous learning and improvement</li>
+          </ul>
+        </div>
+      </WhitepaperSection>
+
+      <WhitepaperSection title="Token Economics" icon={Coins}>
+        <p className="mb-4">
+          The $GC token is the lifeblood of the GameCraft ecosystem, designed to
+          reward creators and fuel the platform's growth.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-indigo-800 p-4 rounded-lg">
+            <h3 className="font-semibold mb-2">Token Details:</h3>
+            <ul className="list-disc list-inside space-y-1">
+              <li>Total Supply: 1 billion $GC</li>
+              <li>Deflationary mechanism</li>
+              <li>Listed on pump.fun</li>
+            </ul>
+          </div>
+          <div className="bg-indigo-800 p-4 rounded-lg">
+            <h3 className="font-semibold mb-2">Holder Benefits:</h3>
+            <ul className="list-disc list-inside space-y-1">
+              <li>Free access with 1M+ tokens</li>
+              <li>Governance rights</li>
+              <li>Exclusive features</li>
+            </ul>
+          </div>
+        </div>
+      </WhitepaperSection>
+
+      <WhitepaperSection title="Roadmap" icon={RocketLaunch}>
+        <div className="space-y-4">
+          <div className="bg-indigo-800 p-4 rounded-lg">
+            <h3 className="font-semibold mb-2">
+              Phase 1: Launch (June 25th, 2024)
+            </h3>
+            <ul className="list-disc list-inside">
+              <li>GameCraft Alpha v1 release</li>
+              <li>$GC token launch on pump.fun</li>
+            </ul>
+          </div>
+          <div className="bg-indigo-800 p-4 rounded-lg">
+            <h3 className="font-semibold mb-2">
+              Phase 2: Enhancement (July 1st, 2024)
+            </h3>
+            <ul className="list-disc list-inside">
+              <li>Custom image upload feature</li>
+              <li>Improved AI mechanism</li>
+            </ul>
+          </div>
+          <div className="bg-indigo-800 p-4 rounded-lg">
+            <h3 className="font-semibold mb-2">
+              Phase 3: Monetization (July 8th, 2024)
+            </h3>
+            <ul className="list-disc list-inside">
+              <li>$GC token payment system</li>
+              <li>Advanced code modification tools</li>
+            </ul>
+          </div>
+          <div className="bg-indigo-800 p-4 rounded-lg">
+            <h3 className="font-semibold mb-2">
+              Phase 4: Expansion (July - August 2024)
+            </h3>
+            <ul className="list-disc list-inside">
+              <li>CoinGecko and CMC listings</li>
+              <li>Strategic partnerships</li>
+              <li>Community growth initiatives</li>
+            </ul>
+          </div>
+        </div>
+      </WhitepaperSection>
+
+      <WhitepaperSection title="Team & Community" icon={Users}>
+        <p className="mb-4">
+          GameCraft is backed by a passionate team of developers, designers, and
+          blockchain experts, united by the vision of democratizing game
+          creation.
+        </p>
+        <div className="bg-indigo-800 p-4 rounded-lg">
+          <h3 className="font-semibold mb-2">Our Strengths:</h3>
+          <ul className="list-disc list-inside space-y-1">
+            <li>Experienced development team</li>
+            <li>Strong and engaged community</li>
+            <li>Partnerships with leading tech companies</li>
+            <li>Commitment to continuous innovation</li>
+          </ul>
+        </div>
+      </WhitepaperSection>
+
+      <section className="mt-16 text-center">
+        <h2 className="text-3xl font-bold mb-4">
+          Join the GameCraft Revolution
+        </h2>
+        <p className="mb-4">
+          Be part of the future of game development. With GameCraft, your
+          imagination is the only limit.
+        </p>
+        <WalletMultiButton className="connect-wallet-button" />
+      </section>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-deep-space text-white">
       <div className="stars"></div>
@@ -267,17 +458,28 @@ export default function Home() {
             <h1 className="text-3xl font-bold font-orbitron text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 animate-title">
               GC
             </h1>
-            <button
-              onClick={toggleLeaderboard}
-              className="text-white hover:text-blue-400 transition duration-300 ease-in-out flex items-center"
-            >
-              <Trophy size={24} className="mr-2 ml-10" />
-              Leaderboard
-            </button>
+            {!isGameCreationMode && (
+              <>
+                <button
+                  onClick={toggleLeaderboard}
+                  className="text-white hover:text-blue-400 transition duration-300 ease-in-out flex items-center"
+                >
+                  <Trophy size={24} className="mr-2 ml-10" />
+                  Leaderboard
+                </button>
+                <button
+                  onClick={toggleWhitepaper}
+                  className="text-white hover:text-blue-400 transition duration-300 ease-in-out flex items-center"
+                >
+                  <Paperclip size={24} className="mr-2 ml-10" />
+                  Whitepaper
+                </button>
+              </>
+            )}
           </div>
           <div className="flex items-center space-x-4">
             <a
-              href="https://www.pump.fun/GUHZxRtarCVNaH3hSzVvRWSjpSAHDPJK38d79aHapump"
+              href="https://dexscreener.com/solana/GUHZxRtarCVNaH3hSzVvRWSjpSAHDPJK38d79aHapump"
               className="text-white hover:text-blue-400 transition duration-300 ease-in-out"
             >
               <BarChart2 size={24} />
@@ -294,7 +496,7 @@ export default function Home() {
             >
               <Twitter size={24} />
             </a>
-            <a href="https://www.pump.fun/GUHZxRtarCVNaH3hSzVvRWSjpSAHDPJK38d79aHapump">
+            <a href="https://raydium.io/swap/?inputCurrency=sol&outputCurrency=guhzxrtarcvnah3hszvvrwsjpsahdpjk38d79ahapump&fixed=in">
               <button className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full text-white font-semibold hover:from-blue-600 hover:to-purple-700 transition duration-300 ease-in-out transform hover:scale-105 shadow-lg">
                 Buy $GC
               </button>
@@ -307,8 +509,10 @@ export default function Home() {
       </header>
 
       <main className="pt-24 pb-12 px-4 sm:px-6 lg:px-8 relative z-10">
-        {showLeaderboard ? (
+        {showLeaderboard && !isGameCreationMode ? (
           renderLeaderboard()
+        ) : showWhitepaper && !isGameCreationMode ? (
+          renderWhitepaper()
         ) : !publicKey ? (
           <div className="max-w-4xl mt-10 mx-auto text-center">
             <h1 className="text-5xl font-bold mb-4 font-orbitron text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 animate-title">
@@ -318,7 +522,10 @@ export default function Home() {
               Craft your own games with only one prompt
             </h3>
             <div className="mb-16">
-              <p className="mb-5">Connect your wallet and test the product</p>
+              <p className="mb-5">
+                If you want to use our products for free you need to hold at
+                least 1 million tokens.
+              </p>
               <WalletMultiButton className="connect-wallet-button" />
             </div>
             <SpaceInvadersGame />
@@ -360,7 +567,7 @@ export default function Home() {
             </button>
           </div>
         ) : (
-          <div className="max-w-7xl mx-auto space-y-8 animate-fadeIn mt-16">
+          <div className="max-w-7xl mx-auto space-y-8 animate-fadeIn">
             <section className="bg-glass p-6 rounded-lg shadow-neon">
               <h2 className="text-2xl font-semibold mb-4 font-orbitron">
                 Create or Modify Your Game
@@ -372,16 +579,23 @@ export default function Home() {
                   onChange={(e) => setPrompt(e.target.value)}
                   className="flex-grow p-3 bg-purple-800 border border-purple-600 rounded-md text-white focus:ring-2 focus:ring-blue-500 transition duration-200"
                   placeholder="e.g. A simple platformer game with a jumping character"
+                  onFocus={startGameCreation}
                 />
                 <button
-                  onClick={() => generateGame(false)}
+                  onClick={() => {
+                    startGameCreation();
+                    generateGame(false);
+                  }}
                   className="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-md font-semibold disabled:opacity-50 transition duration-200"
                   disabled={isGenerating || !prompt.trim()}
                 >
                   {isGenerating ? 'Generating...' : 'Generate New Game'}
                 </button>
                 <button
-                  onClick={() => generateGame(true)}
+                  onClick={() => {
+                    startGameCreation();
+                    generateGame(true);
+                  }}
                   className="px-6 py-2 bg-green-600 hover:bg-green-700 rounded-md font-semibold disabled:opacity-50 transition duration-200"
                   disabled={
                     isGenerating || !prompt.trim() || currentVersionIndex === -1
@@ -457,64 +671,65 @@ export default function Home() {
                 className="w-full h-64 p-3 bg-purple-800 border border-purple-600 rounded-md text-white font-mono text-sm resize-none"
               />
             </section>
-
-            <section className="mt-16 leaderboard-container animate-fadeIn">
-              <div className="leaderboard-header">
-                <h2 className="text-3xl font-bold mb-6 font-orbitron text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500">
-                  Leaderboard
-                </h2>
-                <div className="flex justify-center space-x-4 mb-6">
-                  {['daily', 'weekly', 'monthly'].map((period) => (
-                    <button
-                      key={period}
-                      onClick={() => setLeaderboardPeriod(period)}
-                      className={`px-4 py-2 rounded-full text-sm font-medium transition-colors duration-200 ${
-                        leaderboardPeriod === period
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-purple-800 text-gray-300 hover:bg-purple-700'
-                      }`}
-                    >
-                      {period.charAt(0).toUpperCase() + period.slice(1)}
-                    </button>
-                  ))}
+            {!isGameCreationMode && !publicKey && (
+              <section className="mt-16 leaderboard-container animate-fadeIn">
+                <div className="leaderboard-header">
+                  <h2 className="text-3xl font-bold mb-6 font-orbitron text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500">
+                    Leaderboard
+                  </h2>
+                  <div className="flex justify-center space-x-4 mb-6">
+                    {['daily', 'weekly', 'monthly'].map((period) => (
+                      <button
+                        key={period}
+                        onClick={() => setLeaderboardPeriod(period)}
+                        className={`px-4 py-2 rounded-full text-sm font-medium transition-colors duration-200 ${
+                          leaderboardPeriod === period
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-purple-800 text-gray-300 hover:bg-purple-700'
+                        }`}
+                      >
+                        {period.charAt(0).toUpperCase() + period.slice(1)}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-              {isLoadingLeaderboard ? (
-                <div className="p-4">
-                  <div className="shimmer h-10 w-full mb-4"></div>
-                  <div className="shimmer h-8 w-full mb-2"></div>
-                  <div className="shimmer h-8 w-full mb-2"></div>
-                  <div className="shimmer h-8 w-full mb-2"></div>
-                  <div className="shimmer h-8 w-full mb-2"></div>
-                  <div className="shimmer h-8 w-full"></div>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="leaderboard-table">
-                    <thead>
-                      <tr>
-                        <th>Rank</th>
-                        <th>Name</th>
-                        <th>Username</th>
-                        <th className="text-right">Points</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {leaderboardData.map((user, index) => (
-                        <tr key={index}>
-                          <td className="leaderboard-rank">{index + 1}</td>
-                          <td>{user.name}</td>
-                          <td>@{user.username}</td>
-                          <td className="leaderboard-points text-right">
-                            {user.total_points}
-                          </td>
+                {isLoadingLeaderboard ? (
+                  <div className="p-4">
+                    <div className="shimmer h-10 w-full mb-4"></div>
+                    <div className="shimmer h-8 w-full mb-2"></div>
+                    <div className="shimmer h-8 w-full mb-2"></div>
+                    <div className="shimmer h-8 w-full mb-2"></div>
+                    <div className="shimmer h-8 w-full mb-2"></div>
+                    <div className="shimmer h-8 w-full"></div>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="leaderboard-table">
+                      <thead>
+                        <tr>
+                          <th>Rank</th>
+                          <th>Name</th>
+                          <th>Username</th>
+                          <th className="text-right">Points</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </section>
+                      </thead>
+                      <tbody>
+                        {leaderboardData.map((user, index) => (
+                          <tr key={index}>
+                            <td className="leaderboard-rank">{index + 1}</td>
+                            <td>{user.name}</td>
+                            <td>@{user.username}</td>
+                            <td className="leaderboard-points text-right">
+                              {user.total_points}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </section>
+            )}
           </div>
         )}
       </main>

@@ -9,9 +9,22 @@
   --color-accent: #ec4899;
 }
 
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
 body {
   @apply bg-gradient-to-br from-gray-900 to-black text-white;
   font-family: 'Inter', sans-serif;
+}
+
+#__next {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 h1,
@@ -59,6 +72,44 @@ h6 {
 .aspect-w-3,
 .aspect-h-2 {
   aspect-ratio: 3 / 2;
+}
+
+/* Star background */
+.stars,
+.twinkling,
+.clouds {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.stars {
+  background: #000
+    url('http://www.script-tutorials.com/demos/360/images/stars.png') repeat top
+    center;
+  z-index: -3;
+}
+
+.twinkling {
+  background: transparent
+    url('http://www.script-tutorials.com/demos/360/images/twinkling.png') repeat
+    top center;
+  z-index: -2;
+  animation: move-twink-back 200s linear infinite;
+}
+
+.clouds {
+  background: transparent
+    url('http://www.script-tutorials.com/demos/360/images/clouds.png') repeat
+    top center;
+  z-index: -1;
+  opacity: 0.4;
+  animation: move-clouds-back 200s linear infinite;
 }
 
 /* Animations */
@@ -167,44 +218,6 @@ h6 {
 }
 .animation-delay-600 {
   animation-delay: 600ms;
-}
-
-/* Star background */
-.stars,
-.twinkling,
-.clouds {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-.stars {
-  background: #000
-    url('http://www.script-tutorials.com/demos/360/images/stars.png') repeat top
-    center;
-  z-index: 0;
-}
-
-.twinkling {
-  background: transparent
-    url('http://www.script-tutorials.com/demos/360/images/twinkling.png') repeat
-    top center;
-  z-index: 1;
-  animation: move-twink-back 200s linear infinite;
-}
-
-.clouds {
-  background: transparent
-    url('http://www.script-tutorials.com/demos/360/images/clouds.png') repeat
-    top center;
-  z-index: 2;
-  opacity: 0.4;
-  animation: move-clouds-back 200s linear infinite;
 }
 
 /* Custom scrollbar styles */
