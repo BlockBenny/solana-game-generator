@@ -1,0 +1,383 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Invaders Evolved</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+        }
+        #game-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            background-color: #000033;
+        }
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        #joystick {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            width: 100px;
+            height: 100px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+        }
+        #joystick-knob {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            top: 30px;
+            left: 30px;
+        }
+        #shoot-button {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 80px;
+            height: 80px;
+            background-color: rgba(255, 0, 0, 0.5);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-weight: bold;
+            font-family: Arial, sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+        <div id="joystick">
+            <div id="joystick-knob"></div>
+        </div>
+        <div id="shoot-button">SHOOT</div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const joystick = document.getElementById('joystick');
+        const joystickKnob = document.getElementById('joystick-knob');
+        const shootButton = document.getElementById('shoot-button');
+
+        let gameWidth, gameHeight;
+
+        const pepeImg = new Image();
+        pepeImg.src = "http://localhost:3000/games/3xiUpirb2LFvEFcbh3Ce3Av193F7sbGLStwRZ9umzDzN/pepe.png";
+        
+        const iceconeImg = new Image();
+        iceconeImg.src = "http://localhost:3000/games/3xiUpirb2LFvEFcbh3Ce3Av193F7sbGLStwRZ9umzDzN/icecone.png";
+
+        const player = {
+            x: 0,
+            y: 0,
+            size: 30,
+            speed: 5,
+            angle: 0,
+            turnSpeed: 0.1
+        };
+
+        const bullets = [];
+        const asteroids = [];
+        const stars = [];
+
+        let keys = {};
+        let score = 0;
+        let isGameOver = false;
+
+        function resizeCanvas() {
+            gameWidth = window.innerWidth;
+            gameHeight = window.innerHeight;
+            canvas.width = gameWidth;
+            canvas.height = gameHeight;
+            player.x = gameWidth / 2;
+            player.y = gameHeight / 2;
+        }
+
+        function createStars() {
+            for (let i = 0; i < 100; i++) {
+                stars.push({
+                    x: Math.random() * gameWidth,
+                    y: Math.random() * gameHeight,
+                    size: Math.random() * 2 + 1
+                });
+            }
+        }
+
+        function drawStars() {
+            ctx.fillStyle = 'white';
+            stars.forEach(star => {
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        function moveStars() {
+            const dx = Math.cos(player.angle) * player.speed;
+            const dy = Math.sin(player.angle) * player.speed;
+            stars.forEach(star => {
+                star.x -= dx * 0.1;
+                star.y -= dy * 0.1;
+                if (star.x < 0) star.x += gameWidth;
+                if (star.x > gameWidth) star.x -= gameWidth;
+                if (star.y < 0) star.y += gameHeight;
+                if (star.y > gameHeight) star.y -= gameHeight;
+            });
+        }
+
+        function drawPlayer() {
+            ctx.save();
+            ctx.translate(player.x, player.y);
+            ctx.rotate(player.angle);
+            ctx.drawImage(iceconeImg, -player.size, -player.size, player.size * 2, player.size * 2);
+            ctx.restore();
+        }
+
+        function movePlayer() {
+            if (keys.w || keys.ArrowUp) {
+                player.x += Math.cos(player.angle) * player.speed;
+                player.y += Math.sin(player.angle) * player.speed;
+            }
+            if (keys.s || keys.ArrowDown) {
+                player.x -= Math.cos(player.angle) * player.speed;
+                player.y -= Math.sin(player.angle) * player.speed;
+            }
+            if (keys.a || keys.ArrowLeft) {
+                player.angle -= player.turnSpeed;
+            }
+            if (keys.d || keys.ArrowRight) {
+                player.angle += player.turnSpeed;
+            }
+
+            player.x = Math.max(0, Math.min(gameWidth, player.x));
+            player.y = Math.max(0, Math.min(gameHeight, player.y));
+        }
+
+        function shoot() {
+            bullets.push({
+                x: player.x + Math.cos(player.angle) * player.size,
+                y: player.y + Math.sin(player.angle) * player.size,
+                angle: player.angle,
+                speed: 10
+            });
+        }
+
+        function drawBullets() {
+            ctx.fillStyle = 'yellow';
+            bullets.forEach(bullet => {
+                ctx.beginPath();
+                ctx.arc(bullet.x, bullet.y, 3, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        function moveBullets() {
+            bullets.forEach((bullet, index) => {
+                bullet.x += Math.cos(bullet.angle) * bullet.speed;
+                bullet.y += Math.sin(bullet.angle) * bullet.speed;
+                if (bullet.x < 0 || bullet.x > gameWidth || bullet.y < 0 || bullet.y > gameHeight) {
+                    bullets.splice(index, 1);
+                }
+            });
+        }
+
+        function createAsteroid() {
+            const side = Math.floor(Math.random() * 4);
+            let x, y;
+            switch (side) {
+                case 0: // Top
+                    x = Math.random() * gameWidth;
+                    y = -50;
+                    break;
+                case 1: // Right
+                    x = gameWidth + 50;
+                    y = Math.random() * gameHeight;
+                    break;
+                case 2: // Bottom
+                    x = Math.random() * gameWidth;
+                    y = gameHeight + 50;
+                    break;
+                case 3: // Left
+                    x = -50;
+                    y = Math.random() * gameHeight;
+                    break;
+            }
+            asteroids.push({
+                x: x,
+                y: y,
+                size: Math.random() * 30 + 20,
+                speed: Math.random() * 0.5 + 0.5,
+                angle: Math.atan2(player.y - y, player.x - x)
+            });
+        }
+
+        function drawAsteroids() {
+            asteroids.forEach(asteroid => {
+                ctx.save();
+                ctx.translate(asteroid.x, asteroid.y);
+                ctx.rotate(asteroid.angle);
+                ctx.drawImage(pepeImg, -asteroid.size/2, -asteroid.size/2, asteroid.size, asteroid.size);
+                ctx.restore();
+            });
+        }
+
+        function moveAsteroids() {
+            asteroids.forEach(asteroid => {
+                asteroid.x += Math.cos(asteroid.angle) * asteroid.speed;
+                asteroid.y += Math.sin(asteroid.angle) * asteroid.speed;
+            });
+        }
+
+        function checkCollisions() {
+            asteroids.forEach((asteroid, asteroidIndex) => {
+                bullets.forEach((bullet, bulletIndex) => {
+                    const dx = asteroid.x - bullet.x;
+                    const dy = asteroid.y - bullet.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    if (distance < asteroid.size / 2 + 3) {
+                        asteroids.splice(asteroidIndex, 1);
+                        bullets.splice(bulletIndex, 1);
+                        score += 10;
+                    }
+                });
+
+                const dx = asteroid.x - player.x;
+                const dy = asteroid.y - player.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance < asteroid.size / 2 + player.size / 2) {
+                    isGameOver = true;
+                }
+            });
+        }
+
+        function drawScore() {
+            ctx.fillStyle = 'white';
+            ctx.font = '20px Arial';
+            ctx.fillText(`Score: ${score}`, 10, 30);
+        }
+
+        function drawGameOver() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.fillRect(0, 0, gameWidth, gameHeight);
+            ctx.fillStyle = 'white';
+            ctx.font = '40px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('GAME OVER', gameWidth / 2, gameHeight / 2 - 40);
+            ctx.font = '20px Arial';
+            ctx.fillText(`Final Score: ${score}`, gameWidth / 2, gameHeight / 2 + 20);
+            ctx.fillText('Click to restart', gameWidth / 2, gameHeight / 2 + 60);
+        }
+
+        function gameLoop() {
+            ctx.clearRect(0, 0, gameWidth, gameHeight);
+
+            if (!isGameOver) {
+                movePlayer();
+                moveBullets();
+                moveAsteroids();
+                moveStars();
+                checkCollisions();
+
+                drawStars();
+                drawPlayer();
+                drawBullets();
+                drawAsteroids();
+                drawScore();
+
+                if (Math.random() < 0.02) {
+                    createAsteroid();
+                }
+
+                requestAnimationFrame(gameLoop);
+            } else {
+                drawGameOver();
+            }
+        }
+
+        function handleMouseMove(e) {
+            if (!isGameOver) {
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+                player.angle = Math.atan2(mouseY - player.y, mouseX - player.x);
+            }
+        }
+
+        function handleMouseClick() {
+            if (isGameOver) {
+                isGameOver = false;
+                score = 0;
+                player.x = gameWidth / 2;
+                player.y = gameHeight / 2;
+                asteroids.length = 0;
+                bullets.length = 0;
+                gameLoop();
+            } else {
+                shoot();
+            }
+        }
+
+        function handleTouchStart(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            if (touch.target === shootButton) {
+                shoot();
+            }
+        }
+
+        function handleTouchMove(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            if (touch.target === joystickKnob || touch.target === joystick) {
+                const rect = joystick.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                const touchX = touch.clientX;
+                const touchY = touch.clientY;
+                const dx = touchX - centerX;
+                const dy = touchY - centerY;
+                const distance = Math.min(rect.width / 2, Math.sqrt(dx * dx + dy * dy));
+                const angle = Math.atan2(dy, dx);
+                const knobX = Math.cos(angle) * distance;
+                const knobY = Math.sin(angle) * distance;
+                joystickKnob.style.transform = `translate(${knobX}px, ${knobY}px)`;
+                player.angle = angle;
+                player.x += Math.cos(angle) * player.speed;
+                player.y += Math.sin(angle) * player.speed;
+            }
+        }
+
+        function handleTouchEnd(e) {
+            e.preventDefault();
+            joystickKnob.style.transform = 'translate(0, 0)';
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        window.addEventListener('keydown', e => keys[e.key] = true);
+        window.addEventListener('keyup', e => keys[e.key] = false);
+        canvas.addEventListener('mousemove', handleMouseMove);
+        canvas.addEventListener('click', handleMouseClick);
+        joystick.addEventListener('touchstart', handleTouchStart);
+        joystick.addEventListener('touchmove', handleTouchMove);
+        joystick.addEventListener('touchend', handleTouchEnd);
+        shootButton.addEventListener('touchstart', handleTouchStart);
+
+        resizeCanvas();
+        createStars();
+        gameLoop();
+    </script>
+</body>
+</html>
