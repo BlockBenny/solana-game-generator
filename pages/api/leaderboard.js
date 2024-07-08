@@ -28,7 +28,7 @@ export default async function handler(req, res) {
       const result = await client.query(`
         SELECT u.username, SUM(p.points) as total_points
         FROM users u
-        JOIN points p ON u.id = p.user_id
+        JOIN points p ON u.id = p.user_public_key
         WHERE p.timestamp > ${timeFrame}
         GROUP BY u.id, u.username
         ORDER BY total_points DESC

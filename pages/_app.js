@@ -8,9 +8,8 @@ import { PhantomWalletAdapter } from '@solana/wallet-adapter-wallets';
 import { clusterApiUrl } from '@solana/web3.js';
 import { useMemo } from 'react';
 
-// Use require instead of import since order matters
+import '../styles/globals.css';
 require('@solana/wallet-adapter-react-ui/styles.css');
-require('../styles/globals.css');
 
 function MyApp({ Component, pageProps }) {
   const network = WalletAdapterNetwork.Devnet;

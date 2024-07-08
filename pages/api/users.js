@@ -1,7 +1,8 @@
-import { Connection, PublicKey } from '@solana/web3.js';
+import { Pool } from 'pg';
 
-// This is a mock database. In a real application, you'd use a proper database.
-const users = new Map();
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
 
 export default async function handler(req, res) {
   if (req.method === 'POST') {
@@ -11,12 +12,30 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Public key is required' });
     }
 
-    if (!users.has(publicKey)) {
-      users.set(publicKey, { publicKey });
-      return res.status(201).json({ message: 'User created' });
-    }
+    try {
+      const client = await pool.connect();
 
-    return res.status(200).json({ message: 'User already exists' });
+      // Check if user exists
+      const { rows } = await client.query(
+        'SELECT * FROM users WHERE public_key = $1',
+        [publicKey]
+      );
+
+      if (rows.length === 0) {
+        // User doesn't exist, create new user
+        await client.query('INSERT INTO users (public_key) VALUES ($1)', [
+          publicKey,
+        ]);
+        client.release();
+        return res.status(201).json({ message: 'User created' });
+      }
+
+      client.release();
+      return res.status(200).json({ message: 'User already exists' });
+    } catch (error) {
+      console.error('Error in user operation:', error);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
   }
 
   res.setHeader('Allow', ['POST']);

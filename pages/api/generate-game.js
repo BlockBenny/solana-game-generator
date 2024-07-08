@@ -1,67 +1,81 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { Pool } from 'pg';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
+
 export default async function handler(req, res) {
   if (req.method === 'POST') {
-    const { prompt, currentGame } = req.body;
+    const { prompt, currentGame, publicKey, gameId, isIteration } = req.body;
 
     try {
       console.log('Generating game with prompt:', prompt);
 
-      let context = `Create a simple, interactive HTML5 game based on this prompt. The game should fit in a 400x400 pixel area, be fully playable, and use keyboard controls if necessary. Provide a complete HTML file including internal CSS and JavaScript. The game must be entirely self-contained within this single HTML file. 
+      let context = `You are an expert HTML5 game developer. Your task is to create a fully functional, engaging game based on the given prompt. Follow these instructions precisely:
 
-Important: 
-1. Place all game content (canvas, divs, etc.) inside a div with id="game-container". 
-2. The game-container div should have a width of 600px and a height of 400px.
-3. Include all necessary CSS within a <style> tag in the <head> section.
-4. Include all JavaScript within a <script> tag at the end of the <body> section.
-5. Ensure that the game is fully functional and playable when this HTML is loaded in a browser.
-6. Always wrap your entire HTML code (including <!DOCTYPE html>) in \`\`\`html and \`\`\` tags.
+1. Game Functionality:
+   - The game MUST work perfectly when the HTML is loaded in a browser.
+   - Implement the exact gameplay mechanics described in the prompt.
+   - If the prompt modifies an existing game, apply ONLY the requested changes.
 
-Here's a basic structure to follow:
+2. Code Structure:
+   - Place all content inside <div id="game-container">.
+   - Put CSS in <style> tags in <head>.
+   - Put JavaScript in <script> tags at the end of <body>.
+   - Use ONLY vanilla JavaScript. No external libraries.
 
-\`\`\`html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Title</title>
-    <style>
-        /* Your CSS here */
-        #game-container {
-            width: 600px;
-            height: 400px;
-            /* Other styles */
-        }
-    </style>
-</head>
-<body>
-    <div id="game-container">
-        <!-- Your game content here -->
-    </div>
-    <script>
-        // Your JavaScript here
-    </script>
-</body>
-</html>
-\`\`\``;
+3. Game Design:
+   - The game is rendered in a 375x667 pixels container.
+   - Responsive: Adapt to the container size and make it mobile responsive without it being scrollable.
+   - Visuals: Clean, appealing graphics using HTML5 Canvas or DOM elements.
 
-      if (currentGame) {
-        context +=
-          ' Here is the current game code to iterate upon:\n\n' +
-          `${currentGame.htmlFile}\n\n` +
-          'Please modify this code based on the new prompt, ensuring to provide a complete, self-contained HTML file:';
+4. Essential Components:
+   - Game loop: Use requestAnimationFrame for smooth updates.
+   - Score system: Implement and display prominently.
+   - Start/End conditions: Clear game start and end states.
+   - Instructions: Brief, clear instructions for players.
+
+5. Code Quality:
+   - Write clean, well-commented code.
+   - Optimize for performance (efficient rendering, minimal DOM manipulation).
+
+6. Strict Requirements:
+   - NO placeholder code or comments like "Add game logic here".
+   - FULLY implement all game features mentioned in the prompt.
+   - DO NOT use browser alerts. Implement custom in-game messages.
+   - For images, use: src="http://localhost:3000/uploads/${publicKey}/[image-name]"
+
+7. Testing:
+   - Mentally run through the game logic to ensure it works as intended.
+   - Verify that ALL prompt requirements are met before submitting.
+
+DO ONLY RETURN THE HTML CODE. DO NOT EXPLAIN OR COMMENT ON THE CODE. Your response should contain ONLY the HTML code for the game.
+
+`;
+
+      if (currentGame != '<div>New Game</div>') {
+        context += `\nHere is the current game code to enhance and modify:
+${currentGame}
+\nAnalyze this code carefully. Preserve its core functionality while implementing the requirements of the following prompt:
+`;
+      } else {
+        context += 'Now, create an amazing game based on the following prompt:';
       }
 
-      const fullPrompt = `${context}\n\nNew prompt: ${prompt}`;
+      const fullPrompt = `${context}\n\n<prompt>\n${prompt}\n</prompt>`;
+
+      console.log('Sending prompt to Anthropic:', fullPrompt);
 
       const message = await anthropic.messages.create({
         model: 'claude-3-5-sonnet-20240620',
         max_tokens: 4096,
+        system:
+          'You are a master game developer with expertise in creating engaging HTML5 games. Your responses should demonstrate deep knowledge of game design principles, creative coding techniques, and optimal user experience.',
         messages: [{ role: 'user', content: fullPrompt }],
       });
 
@@ -71,31 +85,81 @@ Here's a basic structure to follow:
         throw new Error('No content received from Anthropic');
       }
 
+      console.log('AI Response:', message.content[0].text);
+
       const htmlFile = parseGameCode(message.content[0].text);
 
       if (!htmlFile) {
-        console.error(
-          'Failed to parse game code. AI response:',
-          message.content[0].text
-        );
+        console.error('Failed to parse game code from Anthropic response');
         throw new Error('Failed to parse game code from Anthropic response');
       }
 
       console.log('Successfully parsed game code');
 
-      res.status(200).json({
-        htmlFile: htmlFile,
-        modificationApplied: true,
-        originalPrompt: prompt,
-      });
+      // Save the game and its new version to the database
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+
+        let game;
+        if (isIteration && gameId) {
+          // Update existing game
+          const updateGameQuery =
+            'UPDATE games SET updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING id, title';
+          const gameResult = await client.query(updateGameQuery, [gameId]);
+          game = gameResult.rows[0];
+        } else {
+          // Create new game
+          const createGameQuery =
+            'INSERT INTO games (user_public_key, title) VALUES ($1, $2) RETURNING id, title';
+          const gameResult = await client.query(createGameQuery, [
+            publicKey,
+            'Awesome HTML5 Game',
+          ]);
+          game = gameResult.rows[0];
+        }
+
+        // Get the latest version number
+        const versionQuery =
+          'SELECT MAX(version_number) as max_version FROM game_versions WHERE game_id = $1';
+        let versionResult = await client.query(versionQuery, [game.id]);
+        const latestVersion = versionResult.rows[0].max_version || 0;
+        const newVersionNumber = latestVersion + 1;
+
+        // Insert new game version
+        const insertVersionQuery =
+          'INSERT INTO game_versions (game_id, version_number, html_content, prompt) VALUES ($1, $2, $3, $4) RETURNING id, version_number';
+        versionResult = await client.query(insertVersionQuery, [
+          game.id,
+          newVersionNumber,
+          htmlFile,
+          prompt,
+        ]);
+        const newVersion = versionResult.rows[0];
+
+        await client.query('COMMIT');
+
+        res.status(200).json({
+          htmlFile: htmlFile,
+          modificationApplied: true,
+          originalPrompt: prompt,
+          gameId: game.id,
+          gameTitle: game.title,
+          versionId: newVersion.id,
+          versionNumber: newVersion.version_number,
+        });
+      } catch (dbError) {
+        await client.query('ROLLBACK');
+        throw dbError;
+      } finally {
+        client.release();
+      }
     } catch (error) {
-      console.error('Error generating game:', error);
+      console.error('Detailed error:', error);
       res.status(500).json({
-        error: 'Failed to generate or modify game',
+        error: 'An unexpected error occurred',
         details: error.message,
-        htmlFile: currentGame?.htmlFile || '',
-        modificationApplied: false,
-        originalPrompt: prompt,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
       });
     }
   } else {
@@ -104,17 +168,59 @@ Here's a basic structure to follow:
   }
 }
 
+// ... (previous code remains the same)
+
 function parseGameCode(content) {
   console.log('Parsing game code from content');
-  const htmlMatch = content.match(/```html([\s\S]*?)```/);
-  if (!htmlMatch) {
-    console.error('No HTML code block found in the content');
-    return null;
+
+  // Try to find HTML code wrapped in code blocks
+  let htmlMatch = content.match(/```html([\s\S]*?)```/);
+
+  if (htmlMatch) {
+    console.log('Found HTML code wrapped in code blocks');
+    return htmlMatch[1].trim();
   }
-  const htmlCode = htmlMatch[1].trim();
-  if (!htmlCode.includes('<div id="game-container"')) {
-    console.error('No game-container div found in the HTML');
-    return null;
+
+  // If no code blocks, try to extract everything between <html> tags
+  htmlMatch = content.match(/<html[\s\S]*<\/html>/i);
+
+  if (htmlMatch) {
+    console.log('Found HTML code between <html> tags');
+    return htmlMatch[0].trim();
   }
-  return htmlCode;
+
+  // If still no match, look for a <div id="game-container"> as a starting point
+  htmlMatch = content.match(/<div id="game-container"[\s\S]*<\/div>/i);
+
+  if (htmlMatch) {
+    console.log('Found game container div');
+    // Wrap the game container in a basic HTML structure
+    return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML5 Game</title>
+</head>
+<body>
+    ${htmlMatch[0]}
+</body>
+</html>
+    `.trim();
+  }
+
+  // If we still haven't found any HTML, check if the entire content is valid HTML
+  if (
+    content.trim().startsWith('<!DOCTYPE html>') ||
+    content.trim().startsWith('<html>')
+  ) {
+    console.log('Entire content appears to be valid HTML');
+    return content.trim();
+  }
+
+  console.error('No valid HTML code found in the content');
+  return null;
 }
+
+// ... (rest of the code remains the same)

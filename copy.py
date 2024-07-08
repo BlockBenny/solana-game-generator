@@ -54,7 +54,30 @@ def copy_structure_and_content(
 # Usage
 source_directory = "."
 output_file = "./project_structure_and_content.txt"
-exclude_dirs = ["node_modules", ".next", ".git", "__pycache__"]
-exclude_files = ["package-lock.json", "yarn.lock", "pnpm-lock.yaml"]
+exclude_dirs = ["node_modules", ".next", ".git", "__pycache__", "public", "styles"]
+exclude_files = [
+    "package-lock.json",
+    "yarn.lock",
+    "pnpm-lock.yaml",
+    ".env.local",
+    "copy.py",
+    "README.md",
+    ".gitignore",
+    "game0.html",
+    "global.css",
+    "dbInit.js",
+    "jsconfig.json",
+    "tsconfig.json",
+    "tsconfig.server.json",
+    "tailwind.config.js",
+    ".DS_Store",
+    "postcss.config.mjs",
+    "next.config.mjs",
+    "package.json",
+    "WhitepaperPage.js",
+    "LeaderboardPage.js",
+    "SpaceInvadersPage.js",
+    "SpaceInvadersGame.js",
+]
 
 copy_structure_and_content(source_directory, output_file, exclude_dirs, exclude_files)
