@@ -53,7 +53,9 @@ export default function Home() {
           publicKey.toBase58() ===
             'HRhCEc9DyUUFHiSviUMc3SPzPK3dqicjBaqzYCxEDjSx' || // Burn 3
           publicKey.toBase58() ===
-            '8YSL5UFYWdPURr1Ax4WZiwFo5LSKQzvvuT3a1LjqQPm1' // Burn 4
+            '8YSL5UFYWdPURr1Ax4WZiwFo5LSKQzvvuT3a1LjqQPm1' || // Burn 4
+          publicKey.toBase58() ===
+            '3ZFELPVVCpZ1pPKFfNLfxtw9wUEqe53pRLhUJWN7SYtp' // Coin Vader
       );
     } catch (error) {
       console.error('Error checking access:', error);
