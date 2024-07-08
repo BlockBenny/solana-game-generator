@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { checkTokenBalance } from '../utils/tokenBalance';
 import Navbar from '../components/Navbar';
@@ -14,61 +14,51 @@ export default function Home() {
   const [balanceError, setBalanceError] = useState(null);
   const [tokenAddress] = useState(process.env.NEXT_PUBLIC_TOKEN_ADDRESS);
 
-  useEffect(() => {
-    let isMounted = true;
+  const checkAccess = useCallback(async () => {
+    if (!publicKey) return;
 
-    async function checkAccess() {
-      if (publicKey) {
-        setIsCheckingBalance(true);
-        setBalanceError(null);
-        try {
-          await fetch('/api/users', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ publicKey: publicKey.toBase58() }),
-          });
+    setIsCheckingBalance(true);
+    setBalanceError(null);
 
-          const balance = await checkTokenBalance(
-            publicKey.toBase58(),
-            tokenAddress
-          );
+    try {
+      await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ publicKey: publicKey.toBase58() }),
+      });
 
-          if (isMounted) {
-            setTokenBalance(balance);
-            // setHasAccess(balance >= 1000000);
-            setHasAccess(
-              publicKey.toBase58() ===
-                'GiXJpQtuAKtvyrdN787mJBingdpztQdVueMQkdQsswRH' ||
-                publicKey.toBase58() ===
-                  'FAWKGGnSUWSrmjq71sgouHdQCSDkiMzByjptNqGgbJ84' ||
-                publicKey.toBase58() ===
-                  'EGShkrNzBNqJmJwYrBREkWmLDfxZcXmPU9gAx7DvERxM' ||
-                publicKey.toBase58() ===
-                  'D297mBziKxsLM3rtEAusXFvZXwY9Q7N7nGb2WEmvcf5d'
-            );
-          }
-        } catch (error) {
-          console.error('Error checking access:', error);
-          if (isMounted) {
-            setBalanceError(
-              'Failed to check token balance. Please ensure you have tokens in your wallet and try again.'
-            );
-            setHasAccess(false);
-          }
-        } finally {
-          if (isMounted) {
-            setIsCheckingBalance(false);
-          }
-        }
-      }
+      const balance = await checkTokenBalance(
+        publicKey.toBase58(),
+        tokenAddress
+      );
+
+      setTokenBalance(balance);
+      setHasAccess(
+        publicKey.toBase58() ===
+          'GiXJpQtuAKtvyrdN787mJBingdpztQdVueMQkdQsswRH' ||
+          publicKey.toBase58() ===
+            'FAWKGGnSUWSrmjq71sgouHdQCSDkiMzByjptNqGgbJ84' ||
+          publicKey.toBase58() ===
+            'EGShkrNzBNqJmJwYrBREkWmLDfxZcXmPU9gAx7DvERxM' ||
+          publicKey.toBase58() ===
+            'D297mBziKxsLM3rtEAusXFvZXwY9Q7N7nGb2WEmvcf5d'
+      );
+    } catch (error) {
+      console.error('Error checking access:', error);
+      setBalanceError('Failed to check token balance. Please try again.');
+      setHasAccess(false);
+    } finally {
+      setIsCheckingBalance(false);
     }
-
-    checkAccess();
-
-    return () => {
-      isMounted = false;
-    };
   }, [publicKey, tokenAddress]);
+
+  useEffect(() => {
+    let timeoutId;
+    if (publicKey) {
+      timeoutId = setTimeout(checkAccess, 1000); // Delay check by 1 second
+    }
+    return () => clearTimeout(timeoutId);
+  }, [publicKey, checkAccess]);
 
   const renderContent = () => {
     if (!publicKey) {
@@ -77,7 +67,7 @@ export default function Home() {
 
     if (isCheckingBalance) {
       return (
-        <div className="max-w-2xl mx-auto bg-blue-800 bg-opacity-50 p-8 rounded-lg text-center animate-pulse shadow-neon">
+        <div className="max-w-2xl mx-auto bg-blue-800 bg-opacity-50 p-8 rounded-lg text-center shadow-neon">
           <h2 className="text-2xl font-bold mb-4 font-orbitron">
             Checking Token Balance...
           </h2>
@@ -94,7 +84,7 @@ export default function Home() {
           </h2>
           <p className="text-xl mb-4">{balanceError}</p>
           <button
-            onClick={() => window.location.reload()}
+            onClick={checkAccess}
             className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-md font-semibold transition duration-200"
           >
             Retry
@@ -114,7 +104,7 @@ export default function Home() {
             access will be granted after testing is complete.
           </p>
           <button
-            onClick={() => window.location.reload()}
+            onClick={checkAccess}
             className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-md font-semibold transition duration-200"
           >
             Refresh Balance
