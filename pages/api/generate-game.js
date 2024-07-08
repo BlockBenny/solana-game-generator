@@ -16,7 +16,7 @@ export default async function handler(req, res) {
     try {
       console.log('Generating game with prompt:', prompt);
 
-      let context = `You are an expert HTML5 game developer. Your task is to create a fully functional, engaging game based on the given prompt. Follow these instructions precisely:
+      let context = `Follow these instructions precisely:
 
 1. Game Functionality:
    - The game MUST work perfectly when the HTML is loaded in a browser.
@@ -60,12 +60,6 @@ VERY IMPORTANT: Do NOT use browser alerts for in-game messages. Implement custom
 
 Add this to the code so it always prevents zooming on double-tap:
 
-  // Modify the shoot button event listener
-  shootButton.addEventListener('touchstart', function(e) {
-      e.preventDefault();
-      shoot();
-  });
-
   // Add this to prevent zooming on double-tap
   document.addEventListener('touchstart', function(e) {
       if (e.touches.length > 1) {
@@ -102,7 +96,7 @@ ${currentGame}
         model: 'claude-3-5-sonnet-20240620',
         max_tokens: 4096,
         system:
-          'You are a master game developer with expertise in creating engaging HTML5 games. Your responses should demonstrate deep knowledge of game design principles, creative coding techniques, and optimal user experience.',
+          'You are a master game developer with expertise in creating engaging HTML5 games. You are always returning full HTML code for the games without any additional comments.',
         messages: [{ role: 'user', content: fullPrompt }],
       });
 
