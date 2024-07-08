@@ -48,7 +48,7 @@ export default async function handler(req, res) {
    - NO placeholder code or comments like "Add game logic here".
    - FULLY implement all game features mentioned in the prompt.
    - DO NOT use browser alerts. Implement custom in-game messages.
-   - For images, use: src="http://localhost:3000/uploads/${publicKey}/[image-name]"
+   - For images, use: src="https://gamecraft.rocks/uploads/${publicKey}/[image-name]"
 
 7. Testing:
    - Mentally run through the game logic to ensure it works as intended.
