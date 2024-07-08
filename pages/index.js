@@ -38,7 +38,11 @@ export default function Home() {
             // setHasAccess(balance >= 1000000);
             setHasAccess(
               publicKey.toBase58() ===
-                'GiXJpQtuAKtvyrdN787mJBingdpztQdVueMQkdQsswRH'
+                'GiXJpQtuAKtvyrdN787mJBingdpztQdVueMQkdQsswRH' ||
+                publicKey.toBase58() ===
+                  'FAWKGGnSUWSrmjq71sgouHdQCSDkiMzByjptNqGgbJ84' ||
+                publicKey.toBase58() ===
+                  'EGShkrNzBNqJmJwYrBREkWmLDfxZcXmPU9gAx7DvERxM'
             );
           }
         } catch (error) {

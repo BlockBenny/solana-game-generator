@@ -56,6 +56,8 @@ export default async function handler(req, res) {
 
 DO ONLY RETURN THE HTML CODE. DO NOT EXPLAIN OR COMMENT ON THE CODE. Your response should contain ONLY the HTML code for the game.
 
+IMPORTANT: On mobile View it should not zoom in the website when the user double-taps on the screen. The user should be able to play the game without any issues.
+VERY IMPORTANT: Do NOT use browser alerts for in-game messages. Implement custom in-game messages instead.
 `;
 
       if (currentGame != '<div>New Game</div>') {
