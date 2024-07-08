@@ -44,15 +44,21 @@ export default function Navbar() {
     <header className="fixed w-full z-50 bg-opacity-30 backdrop-filter backdrop-blur-lg bg-gray-900 shadow-lg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex justify-between items-center">
-          <div className="flex items-center ">
+          <div className="flex items-center">
             <Link
               href="/"
               className="text-3xl font-bold font-orbitron text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 animate-title"
             >
-              {/* Insert logo */}
               <img src="/logo.png" alt="GameCraft" height={50} width={80} />
             </Link>
+          </div>
+
+          {/* Desktop menu */}
+          <div className="hidden md:flex items-center space-x-6">
             <NavLinks />
+            <SocialLinks />
+            <BuyButton />
+            <CustomWalletButton />
           </div>
 
           {/* Mobile menu button */}
@@ -61,24 +67,17 @@ export default function Navbar() {
               {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
           </div>
-
-          {/* Desktop menu */}
-          <div className="hidden md:flex items-center space-x-6">
-            <SocialLinks />
-            <BuyButton />
-            <CustomWalletButton />
-          </div>
         </div>
 
         {/* Mobile menu */}
         {isMenuOpen && (
-          <div className="md:hidden mt-4 flex flex-col space-y-4">
+          <div className="md:hidden mt-4 flex flex-col space-y-4 items-center">
             <NavLinks mobile />
-            <div className="flex justify-center space-x-4">
-              <SocialLinks />
+            <div className="flex flex-col space-y-4 items-center">
+              <SocialLinks mobile />
+              <BuyButton mobile />
+              <CustomWalletButton />
             </div>
-            <BuyButton mobile />
-            <CustomWalletButton />
           </div>
         )}
       </div>
@@ -87,10 +86,10 @@ export default function Navbar() {
 }
 
 const NavLinks = ({ mobile }) => (
-  <nav className={`${mobile ? 'flex flex-col space-y-6' : 'flex space-x-10'}`}>
+  <nav className={`${mobile ? 'flex flex-col space-y-4' : 'flex space-x-6'}`}>
     <Link
       href="/how-it-works"
-      className="text-white hover:text-blue-400 transition duration-300 ease-in-out flex items-center ml-16"
+      className="text-white hover:text-blue-400 transition duration-300 ease-in-out flex items-center"
     >
       <HelpCircle size={20} className="mr-2" />
       How it works
@@ -112,27 +111,30 @@ const NavLinks = ({ mobile }) => (
   </nav>
 );
 
-const SocialLinks = () => (
-  <>
+const SocialLinks = ({ mobile }) => (
+  <div className={`flex ${mobile ? 'flex-col space-y-4' : 'space-x-4'}`}>
     <a
       href="https://dexscreener.com/solana/GUHZxRtarCVNaH3hSzVvRWSjpSAHDPJK38d79aHapump"
-      className="text-white hover:text-blue-400 transition duration-300 ease-in-out"
+      className="text-white hover:text-blue-400 transition duration-300 ease-in-out flex items-center"
     >
-      <BarChart2 size={24} />
+      <BarChart2 size={24} className="mr-2" />
+      {mobile && 'DEX Screener'}
     </a>
     <a
       href="https://t.me/gamecraftoc"
-      className="text-white hover:text-blue-400 transition duration-300 ease-in-out"
+      className="text-white hover:text-blue-400 transition duration-300 ease-in-out flex items-center"
     >
-      <MessageCircle size={24} />
+      <MessageCircle size={24} className="mr-2" />
+      {mobile && 'Telegram'}
     </a>
     <a
       href="https://x.com/gc_gamecraft"
-      className="text-white hover:text-blue-400 transition duration-300 ease-in-out"
+      className="text-white hover:text-blue-400 transition duration-300 ease-in-out flex items-center"
     >
-      <Twitter size={24} />
+      <Twitter size={24} className="mr-2" />
+      {mobile && 'Twitter'}
     </a>
-  </>
+  </div>
 );
 
 const BuyButton = ({ mobile }) => (

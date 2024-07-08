@@ -42,7 +42,9 @@ export default function Home() {
                 publicKey.toBase58() ===
                   'FAWKGGnSUWSrmjq71sgouHdQCSDkiMzByjptNqGgbJ84' ||
                 publicKey.toBase58() ===
-                  'EGShkrNzBNqJmJwYrBREkWmLDfxZcXmPU9gAx7DvERxM'
+                  'EGShkrNzBNqJmJwYrBREkWmLDfxZcXmPU9gAx7DvERxM' ||
+                publicKey.toBase58() ===
+                  'D297mBziKxsLM3rtEAusXFvZXwY9Q7N7nGb2WEmvcf5d'
             );
           }
         } catch (error) {

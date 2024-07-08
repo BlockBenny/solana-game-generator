@@ -50,14 +50,16 @@ const HomePage = () => {
         <p className="text-xl mb-8">
           Experience the future of game development with AI-powered creation.
         </p>
-        <div className="flex justify-center space-x-4 mb-8">
+        <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4 mb-8 items-center">
           <Link
             href="/how-it-works"
-            className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded flex items-center"
+            className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded flex items-center justify-center w-4/5 sm:w-auto"
           >
             How It Works
           </Link>
-          <CustomWalletButton />
+          <div className="w-full sm:w-auto">
+            <CustomWalletButton />
+          </div>
         </div>
         <p className="text-sm text-purple-300">
           Hold at least 1 million $GC tokens for free access to our platform.
