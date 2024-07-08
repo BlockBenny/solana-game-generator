@@ -56,8 +56,33 @@ export default async function handler(req, res) {
 
 DO ONLY RETURN THE HTML CODE. DO NOT EXPLAIN OR COMMENT ON THE CODE. Your response should contain ONLY the HTML code for the game.
 
-IMPORTANT: On mobile View it should not zoom in the website when the user double-taps on the screen. The user should be able to play the game without any issues.
 VERY IMPORTANT: Do NOT use browser alerts for in-game messages. Implement custom in-game messages instead.
+
+Add this to the code so it always prevents zooming on double-tap:
+
+  // Modify the shoot button event listener
+  shootButton.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      shoot();
+  });
+
+  // Add this to prevent zooming on double-tap
+  document.addEventListener('touchstart', function(e) {
+      if (e.touches.length > 1) {
+          e.preventDefault();
+      }
+  }, { passive: false });
+
+  // Disable double-tap zoom on the entire document
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', function(e) {
+      const now = (new Date()).getTime();
+      if (now - lastTouchEnd <= 300) {
+          e.preventDefault();
+      }
+      lastTouchEnd = now;
+  }, false);
+
 `;
 
       if (currentGame != '<div>New Game</div>') {
@@ -69,7 +94,7 @@ ${currentGame}
         context += 'Now, create an amazing game based on the following prompt:';
       }
 
-      const fullPrompt = `${context}\n\n<prompt>\n${prompt}\n</prompt>`;
+      const fullPrompt = `${context}\n<prompt>\n${prompt}\n</prompt>`;
 
       console.log('Sending prompt to Anthropic:', fullPrompt);
 

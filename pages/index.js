@@ -108,8 +108,8 @@ export default function Home() {
             Access Denied
           </h2>
           <p className="text-xl mb-4">
-            You need at least 1,000,000 tokens to access the game generator.
-            Your current balance: {tokenBalance}
+            We are currently testing Version 2 of our GameCrafter. General
+            access will be granted after testing is complete.
           </p>
           <button
             onClick={() => window.location.reload()}
