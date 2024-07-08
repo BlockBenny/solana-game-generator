@@ -72,6 +72,12 @@ export default function HowItWorks() {
               Pro Tip: Be specific in your prompts. Describe gameplay mechanics,
               visual style, and any unique features you want in your game.
             </p>
+            <p className="mt-4">
+              ⚠️ Note: If you see a blank white screen after modifiying your
+              game, it might get too big for the AI to handle. Use the following
+              prompt once 'Make the code as slim as possible without losing
+              functionality and style.'
+            </p>
           </StepSection>
 
           <StepSection number="2" title="Launch Your Game" icon={Rocket}>
