@@ -12,11 +12,11 @@ export default function Home() {
   const [tokenBalance, setTokenBalance] = useState(0);
   const [isCheckingBalance, setIsCheckingBalance] = useState(false);
   const [balanceError, setBalanceError] = useState(null);
-  const [tokenAddress, setTokenAddress] = useState(
-    process.env.NEXT_PUBLIC_TOKEN_ADDRESS
-  );
+  const [tokenAddress] = useState(process.env.NEXT_PUBLIC_TOKEN_ADDRESS);
 
   useEffect(() => {
+    let isMounted = true;
+
     async function checkAccess() {
       if (publicKey) {
         setIsCheckingBalance(true);
@@ -32,25 +32,36 @@ export default function Home() {
             publicKey.toBase58(),
             tokenAddress
           );
-          setTokenBalance(balance);
-          // setHasAccess(balance >= 1000000);
-          setHasAccess(
-            publicKey.toBase58() ===
-              'GiXJpQtuAKtvyrdN787mJBingdpztQdVueMQkdQsswRH'
-          );
+
+          if (isMounted) {
+            setTokenBalance(balance);
+            // setHasAccess(balance >= 1000000);
+            setHasAccess(
+              publicKey.toBase58() ===
+                'GiXJpQtuAKtvyrdN787mJBingdpztQdVueMQkdQsswRH'
+            );
+          }
         } catch (error) {
           console.error('Error checking access:', error);
-          setBalanceError(
-            'Failed to check token balance. Please ensure you have tokens in your wallet and try again.'
-          );
-          setHasAccess(false);
+          if (isMounted) {
+            setBalanceError(
+              'Failed to check token balance. Please ensure you have tokens in your wallet and try again.'
+            );
+            setHasAccess(false);
+          }
         } finally {
-          setIsCheckingBalance(false);
+          if (isMounted) {
+            setIsCheckingBalance(false);
+          }
         }
       }
     }
 
     checkAccess();
+
+    return () => {
+      isMounted = false;
+    };
   }, [publicKey, tokenAddress]);
 
   const renderContent = () => {
@@ -93,17 +104,15 @@ export default function Home() {
             Access Denied
           </h2>
           <p className="text-xl mb-4">
-            {/* You need at least 1,000,000 tokens to access the game generator.
-            Your current balance: {tokenBalance} */}
-            We are currently updating the GameCrafter platform. This will be
-            available after testing.
+            You need at least 1,000,000 tokens to access the game generator.
+            Your current balance: {tokenBalance}
           </p>
-          {/* <button
+          <button
             onClick={() => window.location.reload()}
             className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-md font-semibold transition duration-200"
           >
             Refresh Balance
-          </button> */}
+          </button>
         </div>
       );
     }
