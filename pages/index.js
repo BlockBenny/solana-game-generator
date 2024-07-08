@@ -41,7 +41,11 @@ export default function Home() {
           publicKey.toBase58() ===
             'EGShkrNzBNqJmJwYrBREkWmLDfxZcXmPU9gAx7DvERxM' ||
           publicKey.toBase58() ===
-            'D297mBziKxsLM3rtEAusXFvZXwY9Q7N7nGb2WEmvcf5d'
+            'D297mBziKxsLM3rtEAusXFvZXwY9Q7N7nGb2WEmvcf5d' ||
+          publicKey.toBase58() ===
+            '2pKQdh5nztVoSoar8YHrmzUpXhpqXCScdXNRfPRYYVAk' ||
+          publicKey.toBase58() ===
+            'Aqjbn6stAFGwNYj32wavwppbcyi4sPk2cPNvzJdHTiDV'
       );
     } catch (error) {
       console.error('Error checking access:', error);
