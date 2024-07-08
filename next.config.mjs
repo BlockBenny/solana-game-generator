@@ -4,6 +4,9 @@ const nextConfig = {
   publicRuntimeConfig: {
     staticFolder: '/public',
   },
+  serverRuntimeConfig: {
+    maxPayloadSize: '5mb',
+  },
   images: {
     domains: ['localhost'], // Add your production domain here as well
   },
