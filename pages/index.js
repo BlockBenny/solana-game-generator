@@ -62,6 +62,8 @@ export default function Home() {
           publicKey.toBase58() ===
             '7xff5H87oRbuzKutAZ58WCeydtJ2V9WzM1jzGMT3pbR' || // Luca
           publicKey.toBase58() ===
+            '8L3hwg6qRMKJittrYh7Sq7znRrYJEDJvxB2n8jFtiVYb' || // Luca 2
+          publicKey.toBase58() ===
             'Cja4qiJ42HXgZQuAmjYPkMDyLBd38b1AngtAsEi6obf3' // Skuxxboi
       );
     } catch (error) {
