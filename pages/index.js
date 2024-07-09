@@ -34,8 +34,9 @@ export default function Home() {
 
       setTokenBalance(balance);
       setHasAccess(
-        publicKey.toBase58() ===
-          'GiXJpQtuAKtvyrdN787mJBingdpztQdVueMQkdQsswRH' ||
+        tokenBalance > 999999 ||
+          publicKey.toBase58() ===
+            'GiXJpQtuAKtvyrdN787mJBingdpztQdVueMQkdQsswRH' ||
           publicKey.toBase58() ===
             'FAWKGGnSUWSrmjq71sgouHdQCSDkiMzByjptNqGgbJ84' ||
           publicKey.toBase58() ===
@@ -55,7 +56,11 @@ export default function Home() {
           publicKey.toBase58() ===
             '8YSL5UFYWdPURr1Ax4WZiwFo5LSKQzvvuT3a1LjqQPm1' || // Burn 4
           publicKey.toBase58() ===
-            '3ZFELPVVCpZ1pPKFfNLfxtw9wUEqe53pRLhUJWN7SYtp' // Coin Vader
+            '3ZFELPVVCpZ1pPKFfNLfxtw9wUEqe53pRLhUJWN7SYtp' || // Coin Vader
+          publicKey.toBase58() ===
+            '259tQUqbVHdvu546YpedwXwU3twwqKtbMgCfdPyzvuet' || // .
+          publicKey.toBase58() ===
+            'Cja4qiJ42HXgZQuAmjYPkMDyLBd38b1AngtAsEi6obf3' // Skuxxboi
       );
     } catch (error) {
       console.error('Error checking access:', error);
