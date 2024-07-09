@@ -123,8 +123,9 @@ export default function Home() {
             Access Denied
           </h2>
           <p className="text-xl mb-4">
-            We are currently testing Version 2 of our GameCrafter. General
-            access will be granted after testing is complete.
+            You do not have enough tokens to access this game. You need at least
+            1 million $GC tokens. Your current balance is {tokenBalance} $GC
+            tokens.
           </p>
           <button
             onClick={checkAccess}
