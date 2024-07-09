@@ -34,7 +34,7 @@ export default function Home() {
 
       setTokenBalance(balance);
       setHasAccess(
-        tokenBalance > 999999 ||
+        balance > 999999 ||
           publicKey.toBase58() ===
             'GiXJpQtuAKtvyrdN787mJBingdpztQdVueMQkdQsswRH' ||
           publicKey.toBase58() ===
@@ -59,6 +59,8 @@ export default function Home() {
             '3ZFELPVVCpZ1pPKFfNLfxtw9wUEqe53pRLhUJWN7SYtp' || // Coin Vader
           publicKey.toBase58() ===
             '259tQUqbVHdvu546YpedwXwU3twwqKtbMgCfdPyzvuet' || // .
+          publicKey.toBase58() ===
+            '7xff5H87oRbuzKutAZ58WCeydtJ2V9WzM1jzGMT3pbR' || // Luca
           publicKey.toBase58() ===
             'Cja4qiJ42HXgZQuAmjYPkMDyLBd38b1AngtAsEi6obf3' // Skuxxboi
       );
