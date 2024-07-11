@@ -62,7 +62,8 @@ const HomePage = () => {
           </div>
         </div>
         <p className="text-sm text-purple-300">
-          Hold at least 1 million $GC tokens for free access to our platform.
+          Hold at least 100,000 $GC tokens for free access to our platform.
+          (This is a temporal offer)
         </p>
       </div>
 

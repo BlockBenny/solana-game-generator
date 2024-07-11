@@ -77,9 +77,9 @@ export default function HowItWorks() {
 
           <StepSection number="0" title="Get Access to GameCraft" icon={Coins}>
             <p className="text-sm sm:text-base">
-              To start creating games, you need to hold at least 1 million $GC
-              tokens. This gives you full access to the GameCraft platform and
-              all its features.
+              To start creating games, you need to hold at least 100k $GC
+              tokens. (This is a temporal offer) This gives you full access to
+              the GameCraft platform and all its features.
             </p>
             <a
               href="https://raydium.io/swap/?inputCurrency=sol&outputCurrency=GUHZxRtarCVNaH3hSzVvRWSjpSAHDPJK38d79aHapump&inputMint=sol&outputMint=GUHZxRtarCVNaH3hSzVvRWSjpSAHDPJK38d79aHapump"

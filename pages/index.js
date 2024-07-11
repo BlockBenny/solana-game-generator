@@ -136,8 +136,8 @@ export default function Home() {
           </h2>
           <p className="text-xl mb-4">
             You do not have enough tokens to access this game. You need at least
-            1 million $GC tokens. Your current balance is {tokenBalance} $GC
-            tokens.
+            100,000 $GC tokens. (This is a temporal offer) Your current balance
+            is {tokenBalance} $GC tokens.
           </p>
           <button
             onClick={checkAccess}
