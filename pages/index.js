@@ -34,7 +34,7 @@ export default function Home() {
 
       setTokenBalance(balance);
       setHasAccess(
-        balance > 999999 ||
+        balance > 99999 ||
           publicKey.toBase58() ===
             'GiXJpQtuAKtvyrdN787mJBingdpztQdVueMQkdQsswRH' ||
           publicKey.toBase58() ===
@@ -65,6 +65,16 @@ export default function Home() {
             '8L3hwg6qRMKJittrYh7Sq7znRrYJEDJvxB2n8jFtiVYb' || // Luca 2
           publicKey.toBase58() ===
             '68GXQLbg1N6J83q37QsLDaSZFuLy7Lf8zC1H2j3KoyyV' || // L.
+          publicKey.toBase58() ===
+            'BL1uqSy35Mg5E5tafziMQ6ZdHnSKiFurwfWTUJLbS7WT' || // Burn 5
+          publicKey.toBase58() ===
+            'Dvy6kmxjeoCZeu7FgGYSUbKSDPX9bjsRL5Z8FXfSirbr' || // Burn 6
+          publicKey.toBase58() ===
+            '37689qK2TeZcdtzPVihvC5HHrX6B9SYUycYcDBcCJvAo' || // Burn 7
+          publicKey.toBase58() ===
+            'H2MoGz6KEdV3Wtypiq7EiZqUyeMwV5a77xDCPfLyF9Rq' || // Burn 8
+          publicKey.toBase58() ===
+            '7iTNog2mbMTKreGfWaoTvfj8aFRasfHtoeyWsDxFn2T8' || // Burn 9
           publicKey.toBase58() ===
             'Cja4qiJ42HXgZQuAmjYPkMDyLBd38b1AngtAsEi6obf3' // Skuxxboi
       );
