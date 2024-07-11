@@ -55,8 +55,6 @@ Most importantly:
 
 - DO ONLY RETURN THE HTML CODE. DO NOT EXPLAIN OR COMMENT ON THE CODE. Your response should contain ONLY the HTML code for the game.
 - VERY IMPORTANT: Do NOT use browser alerts for in-game messages. Implement custom in-game messages instead.
-- Write as LESS code as possible WITHOUT loosing functionality, logic or style.
-
 
 Add this to the code so it always prevents zooming on double-tap:
 
