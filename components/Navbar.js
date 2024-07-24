@@ -57,7 +57,6 @@ export default function Navbar() {
           <div className="hidden md:flex items-center space-x-6">
             <NavLinks />
             <SocialLinks />
-            <BuyButton />
             <CustomWalletButton />
           </div>
 
@@ -87,20 +86,6 @@ export default function Navbar() {
 
 const NavLinks = ({ mobile }) => (
   <nav className={`${mobile ? 'flex flex-col space-y-4' : 'flex space-x-6'}`}>
-    <Link
-      href="/how-it-works"
-      className="text-white hover:text-blue-400 transition duration-300 ease-in-out flex items-center"
-    >
-      <HelpCircle size={20} className="mr-2" />
-      How it works
-    </Link>
-    <Link
-      href="/whitepaper"
-      className="text-white hover:text-blue-400 transition duration-300 ease-in-out flex items-center"
-    >
-      <FileText size={20} className="mr-2" />
-      Whitepaper
-    </Link>
     {/* <Link
       href="/community-games"
       className="text-white hover:text-blue-400 transition duration-300 ease-in-out flex items-center"
@@ -113,13 +98,6 @@ const NavLinks = ({ mobile }) => (
 
 const SocialLinks = ({ mobile }) => (
   <div className={`flex ${mobile ? 'flex-col space-y-4' : 'space-x-4'}`}>
-    <a
-      href="https://dexscreener.com/solana/GUHZxRtarCVNaH3hSzVvRWSjpSAHDPJK38d79aHapump"
-      className="text-white hover:text-blue-400 transition duration-300 ease-in-out flex items-center"
-    >
-      <BarChart2 size={24} className="mr-2" />
-      {mobile && 'DEX Screener'}
-    </a>
     <a
       href="https://t.me/gamecraftoc"
       className="text-white hover:text-blue-400 transition duration-300 ease-in-out flex items-center"
@@ -135,19 +113,4 @@ const SocialLinks = ({ mobile }) => (
       {mobile && 'Twitter'}
     </a>
   </div>
-);
-
-const BuyButton = ({ mobile }) => (
-  <a
-    href="https://raydium.io/swap/?inputCurrency=sol&outputCurrency=GUHZxRtarCVNaH3hSzVvRWSjpSAHDPJK38d79aHapump&inputMint=sol&outputMint=GUHZxRtarCVNaH3hSzVvRWSjpSAHDPJK38d79aHapump"
-    className={mobile ? 'w-full' : ''}
-  >
-    <button
-      className={`px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full text-white font-semibold hover:from-blue-600 hover:to-purple-700 transition duration-300 ease-in-out transform hover:scale-105 shadow-lg ${
-        mobile ? 'w-full' : ''
-      }`}
-    >
-      Buy $GC
-    </button>
-  </a>
 );

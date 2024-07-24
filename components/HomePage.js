@@ -44,27 +44,32 @@ const HomePage = () => {
             alt="GameCrafter Version 2.0"
             width={900}
             height={450}
-            className="mb-8"
+            className="mb-6"
           />
         </div>
-        <p className="text-xl mb-8">
-          Experience the future of game development with AI-powered creation.
+        <p className="text-xl mb-16">
+          Experience the future of game development with AI-powered game
+          creation. Describe your game idea and let GameCrafter do the rest.
+          Instantly launch your game as HTML5 and share it with the world.
+          Connect your SOLANA wallet and start creating!
         </p>
-        <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4 mb-8 items-center">
-          <Link
-            href="/how-it-works"
-            className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded flex items-center justify-center w-4/5 sm:w-auto"
-          >
-            How It Works
-          </Link>
+        <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4 mb-16 items-center">
           <div className="w-full sm:w-auto">
             <CustomWalletButton />
           </div>
         </div>
-        <p className="text-sm text-purple-300">
-          Hold at least 100,000 $GC tokens for free access to our platform.
-          (This is a temporal offer)
+        <p className="text-xl mb-4">
+          Our $GC token will launch on the BASE chain (ETH/GC)
         </p>
+        <p className="text-xl">
+          You can find more informations about our upcoming token launch in our
+          Telegram channel!
+        </p>
+        <a href="https://t.me/gamecraftoc">
+          <button className="mt-8 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-md font-semibold transition duration-200">
+            Join Telegram
+          </button>
+        </a>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
@@ -83,14 +88,6 @@ const HomePage = () => {
           title="Instant Sharing"
           description="Share your creations instantly with friends or the GameCrafter community."
         />
-      </div>
-
-      <div className="bg-purple-900 bg-opacity-50 p-8 rounded-lg shadow-lg mb-16">
-        <h3 className="text-2xl font-bold mb-4">Try It Out!</h3>
-        <p className="mb-4">
-          Here's an example of what you can create with GameCrafter:
-        </p>
-        <SpaceInvadersGame />
       </div>
     </div>
   );
